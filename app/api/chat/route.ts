@@ -71,47 +71,6 @@ export async function POST(req: Request) {
       data = text;
     }
 
-    // If the webhook node is configured for GET, n8n returns a 404 with a hint.
-    // In that case, retry using GET + query parameters.
-    const upstreamMessage =
-      typeof data === "string"
-        ? data
-        : data && typeof data === "object"
-        ? String((data as Record<string, unknown>).message ?? "")
-        : "";
-    if (
-      !upstream.ok &&
-      upstream.status === 404 &&
-      upstreamMessage.toLowerCase().includes("not registered for post") &&
-      upstreamMessage.toLowerCase().includes("get")
-    ) {
-      const url = new URL(getWebhookUrl());
-      url.searchParams.set("message", message);
-      if (sessionId) url.searchParams.set("sessionId", sessionId);
-
-      const retry = await fetch(url.toString(), { method: "GET" });
-      const retryText = await retry.text();
-      let retryData: unknown = null;
-      try {
-        retryData = retryText ? JSON.parse(retryText) : null;
-      } catch {
-        retryData = retryText;
-      }
-
-      if (!retry.ok) {
-        return Response.json(
-          {
-            error: "Webhook request failed",
-            status: retry.status,
-            details: retryData,
-          },
-          { status: retry.status }
-        );
-      }
-
-      return Response.json({ data: retryData });
-    }
-
     if (!upstream.ok) {
       return Response.json(
         {
