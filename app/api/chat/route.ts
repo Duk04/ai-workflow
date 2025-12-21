@@ -7,6 +7,32 @@ function getWebhookUrl() {
   );
 }
 
+function extractMessage(body: unknown): string {
+  if (!body || typeof body !== "object") return "";
+  const obj = body as Record<string, unknown>;
+
+  const msg = obj.message;
+  if (typeof msg === "string") return msg;
+  if (msg && typeof msg === "object") {
+    const maybeText = (msg as Record<string, unknown>).text;
+    if (typeof maybeText === "string") return maybeText;
+  }
+
+  const fallbackCandidates = [obj.text, obj.input, obj.prompt];
+  for (const candidate of fallbackCandidates) {
+    if (typeof candidate === "string") return candidate;
+  }
+
+  return "";
+}
+
+function extractSessionId(body: unknown): string {
+  if (!body || typeof body !== "object") return "";
+  const obj = body as Record<string, unknown>;
+  const sessionId = obj.sessionId;
+  return typeof sessionId === "string" ? sessionId : "";
+}
+
 export async function POST(req: Request) {
   try {
     const body = (await req.json().catch(() => null)) as {
@@ -14,8 +40,8 @@ export async function POST(req: Request) {
       sessionId?: unknown;
     } | null;
 
-    const message = typeof body?.message === "string" ? body.message : "";
-    const sessionId = typeof body?.sessionId === "string" ? body.sessionId : "";
+    const message = extractMessage(body);
+    const sessionId = extractSessionId(body);
 
     if (!message.trim()) {
       return Response.json({ error: "Missing message" }, { status: 400 });
