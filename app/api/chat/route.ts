@@ -3,7 +3,17 @@ export const dynamic = "force-dynamic";
 function getWebhookUrl() {
   return (
     process.env.N8N_WEBHOOK_URL ??
-    "https://duk0426.app.n8n.cloud/webhook-test/be503623-e1a5-455a-97d8-b664a6e32b1f"
+    "https://duk0426.app.n8n.cloud/webhook/be503623-e1a5-455a-97d8-b664a6e32b1f"
+  );
+}
+
+export async function GET() {
+  return Response.json(
+    {
+      error: "Method not allowed",
+      hint: "Use POST /api/chat with JSON: { message: string | { text: string }, sessionId?: string }",
+    },
+    { status: 405 }
   );
 }
 
