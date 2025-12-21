@@ -47,6 +47,31 @@ export async function POST(req: Request) {
 
     if (!webhookRes.ok) {
       const upstreamStatus = webhookRes.status || 502;
+
+      const webhookUrl = getWebhookUrl();
+      const maybeObj = payload as unknown as Record<string, unknown> | null;
+      const isN8nNotRegistered =
+        upstreamStatus === 404 &&
+        webhookUrl.includes("/webhook-test/") &&
+        !!maybeObj &&
+        typeof maybeObj === "object" &&
+        typeof maybeObj.message === "string" &&
+        maybeObj.message.toLowerCase().includes("not registered");
+
+      if (isN8nNotRegistered) {
+        return NextResponse.json(
+          {
+            error: "Upstream request failed",
+            upstreamStatus,
+            upstreamStatusText: webhookRes.statusText,
+            details: payload,
+            action:
+              "Your N8N_WEBHOOK_URL points to a /webhook-test/ URL. In n8n, click 'Execute workflow' or 'Listen for test event' (test webhooks only work while listening). For always-on, use the Production /webhook/ URL and activate the workflow.",
+          },
+          { status: 503 }
+        );
+      }
+
       return NextResponse.json(
         {
           error: "Upstream request failed",
