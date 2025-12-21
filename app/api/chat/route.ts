@@ -1,46 +1,16 @@
-export const dynamic = "force-dynamic";
+import { NextResponse } from "next/server";
+
+export const runtime = "nodejs";
+
+const DEFAULT_WEBHOOK_URL =
+  "https://duk0426.app.n8n.cloud/webhook-test/be503623-e1a5-455a-97d8-b664a6e32b1f";
 
 function getWebhookUrl() {
   return (
-    process.env.N8N_WEBHOOK_URL ??
-    "https://duk0426.app.n8n.cloud/webhook/be503623-e1a5-455a-97d8-b664a6e32b1f"
+    process.env.N8N_WEBHOOK_URL ||
+    process.env.N8N_CHAT_WEBHOOK_URL ||
+    DEFAULT_WEBHOOK_URL
   );
-}
-
-export async function GET() {
-  return Response.json(
-    {
-      error: "Method not allowed",
-      hint: "Use POST /api/chat with JSON: { message: string | { text: string }, sessionId?: string }",
-    },
-    { status: 405 }
-  );
-}
-
-function extractMessage(body: unknown): string {
-  if (!body || typeof body !== "object") return "";
-  const obj = body as Record<string, unknown>;
-
-  const msg = obj.message;
-  if (typeof msg === "string") return msg;
-  if (msg && typeof msg === "object") {
-    const maybeText = (msg as Record<string, unknown>).text;
-    if (typeof maybeText === "string") return maybeText;
-  }
-
-  const fallbackCandidates = [obj.text, obj.input, obj.prompt];
-  for (const candidate of fallbackCandidates) {
-    if (typeof candidate === "string") return candidate;
-  }
-
-  return "";
-}
-
-function extractSessionId(body: unknown): string {
-  if (!body || typeof body !== "object") return "";
-  const obj = body as Record<string, unknown>;
-  const sessionId = obj.sessionId;
-  return typeof sessionId === "string" ? sessionId : "";
 }
 
 export async function POST(req: Request) {
@@ -48,46 +18,52 @@ export async function POST(req: Request) {
     const body = (await req.json().catch(() => null)) as {
       message?: unknown;
       sessionId?: unknown;
+      [key: string]: unknown;
     } | null;
 
-    const message = extractMessage(body);
-    const sessionId = extractSessionId(body);
-
-    if (!message.trim()) {
-      return Response.json({ error: "Missing message" }, { status: 400 });
-    }
-
-    const upstream = await fetch(getWebhookUrl(), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, sessionId }),
-    });
-
-    const text = await upstream.text();
-    let data: unknown = null;
-    try {
-      data = text ? JSON.parse(text) : null;
-    } catch {
-      data = text;
-    }
-
-    if (!upstream.ok) {
-      return Response.json(
-        {
-          error: "Webhook request failed",
-          status: upstream.status,
-          details: data,
-        },
-        { status: upstream.status }
+    const message =
+      typeof body?.message === "string" ? body.message.trim() : "";
+    if (!message) {
+      return NextResponse.json(
+        { error: "Bad Request", details: "`message` is required" },
+        { status: 400 }
       );
     }
 
-    return Response.json({ data });
-  } catch (err) {
-    return Response.json(
+    const webhookRes = await fetch(getWebhookUrl(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/plain;q=0.9, */*;q=0.8",
+      },
+      signal: AbortSignal.timeout(15_000),
+      body: JSON.stringify(body ?? { message }),
+    });
+
+    const contentType = webhookRes.headers.get("content-type") || "";
+    const payload = contentType.includes("application/json")
+      ? await webhookRes.json().catch(() => null)
+      : await webhookRes.text().catch(() => "");
+
+    if (!webhookRes.ok) {
+      const upstreamStatus = webhookRes.status || 502;
+      return NextResponse.json(
+        {
+          error: "Upstream request failed",
+          upstreamStatus,
+          upstreamStatusText: webhookRes.statusText,
+          details: payload || webhookRes.statusText,
+        },
+        { status: upstreamStatus }
+      );
+    }
+
+    return NextResponse.json({ data: payload }, { status: 200 });
+  } catch (e) {
+    return NextResponse.json(
       {
-        error: "Unexpected error",
-        details: err instanceof Error ? err.message : String(err),
+        error: "Internal Server Error",
+        details: e instanceof Error ? e.message : String(e),
       },
       { status: 500 }
     );
