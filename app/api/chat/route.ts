@@ -17,15 +17,31 @@ export async function POST(req: Request) {
   try {
     const body = (await req.json().catch(() => null)) as {
       message?: unknown;
+      text?: unknown;
       sessionId?: unknown;
       [key: string]: unknown;
     } | null;
 
-    const message =
+    const msgFromMessageField =
       typeof body?.message === "string" ? body.message.trim() : "";
+    const msgFromMessageObject =
+      body?.message &&
+      typeof body.message === "object" &&
+      typeof (body.message as Record<string, unknown>).text === "string"
+        ? String((body.message as Record<string, unknown>).text).trim()
+        : "";
+    const msgFromTextField =
+      typeof body?.text === "string" ? body.text.trim() : "";
+
+    const message =
+      msgFromMessageField || msgFromMessageObject || msgFromTextField;
     if (!message) {
       return NextResponse.json(
-        { error: "Bad Request", details: "`message` is required" },
+        {
+          error: "Bad Request",
+          details:
+            "Missing message. Send JSON with either { message: string } or { text: string } or { message: { text: string } }.",
+        },
         { status: 400 }
       );
     }
@@ -37,7 +53,7 @@ export async function POST(req: Request) {
         Accept: "application/json, text/plain;q=0.9, */*;q=0.8",
       },
       signal: AbortSignal.timeout(15_000),
-      body: JSON.stringify(body ?? { message }),
+      body: JSON.stringify({ ...(body ?? {}), message }),
     });
 
     const contentType = webhookRes.headers.get("content-type") || "";
