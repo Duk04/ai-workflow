@@ -16,6 +16,18 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Chatbot (n8n webhook)
+
+The demo chatbot on the homepage calls a Next.js API route (`/api/chat`) which proxies to your n8n webhook.
+
+- Configure the webhook URL with `N8N_WEBHOOK_URL` in `.env.local`
+
+Example:
+
+```bash
+N8N_WEBHOOK_URL="https://YOUR_N8N_DOMAIN/webhook/..."
+```
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

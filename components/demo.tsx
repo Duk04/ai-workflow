@@ -1,6 +1,3 @@
-import { Button } from "@/components/ui/button";
-import { MessageCircle } from "lucide-react";
-
 export function Demo() {
   return (
     <section className="py-24 bg-primary text-primary-foreground text-center">
@@ -9,16 +6,13 @@ export function Demo() {
           AI Chatbot-ийг туршиж үзэх
         </h2>
         <p className="text-primary-foreground/90 max-w-2xl mx-auto mb-10 text-lg">
-           Бидний demo bot-той яг одоо харилцаж, хэрхэн ажилладгийг бодитоор туршиж үзээрэй.
+          Бидний demo bot-той яг одоо харилцаж, хэрхэн ажилладгийг бодитоор
+          туршиж үзээрэй.
         </p>
-        
-        <div className="flex flex-col items-center gap-4">
-          <Button size="lg" variant="secondary" className="h-14 px-8 text-lg gap-2 rounded-full w-full sm:w-auto">
-            <MessageCircle className="h-5 w-5" />
-            Энд дарж bot-той шууд ярьж үзээрэй
-          </Button>
-          <p className="text-sm opacity-80">Messenger нээгдэх болно</p>
-        </div>
+
+        <p className="text-primary-foreground/90 text-base">
+          Доод баруун буланд байгаа чат товч дээр дарж ярилцаарай.
+        </p>
       </div>
     </section>
   );

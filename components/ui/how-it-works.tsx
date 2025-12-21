@@ -4,10 +4,8 @@ import { cn } from "@/lib/utils";
 import { Layers, Search, Zap } from "lucide-react";
 import type React from "react";
 
-// The main props for the HowItWorks component
-interface HowItWorksProps extends React.HTMLAttributes<HTMLElement> {}
+type HowItWorksProps = React.HTMLAttributes<HTMLElement>;
 
-// The props for a single step card
 interface StepCardProps {
   icon: React.ReactNode;
   title: string;
@@ -15,10 +13,6 @@ interface StepCardProps {
   benefits: string[];
 }
 
-/**
- * A single step card within the "How It Works" section.
- * It displays an icon, title, description, and a list of benefits.
- */
 const StepCard: React.FC<StepCardProps> = ({
   icon,
   title,
@@ -52,10 +46,6 @@ const StepCard: React.FC<StepCardProps> = ({
   </div>
 );
 
-/**
- * A responsive "How It Works" section that displays a 3-step process.
- * It is styled with shadcn/ui theme variables to support light and dark modes.
- */
 export const HowItWorks: React.FC<HowItWorksProps> = ({
   className,
   ...props

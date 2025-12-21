@@ -32,8 +32,8 @@ function SocialTile({
 
 export function SocialInfiniteSlider() {
   return (
-    <section className="w-full">
-      <div className="container px-4 mx-auto py-10 md:py-12">
+    <section className="w-full bg-[#030303] border-t border-white/10">
+      <div className="container px-4 mx-auto py-8 md:py-10">
         <div className="flex items-center justify-between gap-6 mb-6">
           <h3 className="text-base md:text-lg font-semibold text-white/80">
             Connect with us
